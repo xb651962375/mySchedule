@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOMAIN: https://sockboom.tv
+    # 为了避免被其他人点击 Star 导致的不必要的麻烦，还需要在 workflow 文件中加上 这样只有仓库所有者，也就是你自己点 Star 才有效
     if: >-
       github.event.repository.owner.id == github.event.sender.id ||
       github.event_name == 'schedule'
