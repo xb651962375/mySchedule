@@ -43,8 +43,8 @@ jobs:
       run: |
         PALYLOAD=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
         curl "$BARK_URL/$PALYLOAD?group=$GROUP&icon=$ICON"
-    - name: Push log #更新日志
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: auto-checkin
-        branch: master
+    #- name: Push log #更新日志
+    #  uses: stefanzweifel/git-auto-commit-action@v4
+    #  with:
+    #    commit_message: auto-checkin
+    #    branch: master
