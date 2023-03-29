@@ -1,0 +1,49 @@
+name: 'check'
+
+on: 
+  schedule:
+    - cron: '30 17 * * *' # UTC+8小时=北京时间 17代表凌晨一点
+  watch:
+    types: [started]
+   
+jobs:
+  checking:
+    runs-on: ubuntu-latest
+    env:
+      DOMAIN: https://sockboom.tv
+    if: >-
+      github.event.repository.owner.id == github.event.sender.id ||
+      github.event_name == 'schedule'
+    steps:
+    - name: Setup timezone
+      uses: zcong1993/setup-timezone@master
+      with:
+        timezone: Asia/Shanghai          
+    - name: Get log
+      uses: actions/checkout@master
+    - name: Login in APi #登录获取cookie
+      env:
+        EMAIL: ${{ secrets.EMAIL }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+      run: | 
+        curl -s -c cookie.txt -X POST "$DOMAIN/auth/login" -d email="$EMAIL" -d passwd="$PASSWORD"
+    - name: Chickin Api #签到
+      run: | 
+        dateTime=`date +%Y-%m-%d\ %H:%M:%S`
+        response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
+        echo "$dateTime - $(echo -e $response)" >> run.log
+        tail run.log #避免日志上传失败丢失日志
+    - name: Push bark
+      env:
+        BARK_URL: ${{ secrets.BARK_URL }}
+        ICON: https://github.githubassets.com/favicons/favicon-dark.png
+        GROUP: gh-action
+      if: env.BARK_URL != null
+      run: |
+        PALYLOAD=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
+        curl "$BARK_URL/$PALYLOAD?group=$GROUP&icon=$ICON"
+    - name: Push log #更新日志
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: auto-checkin
+        branch: master
