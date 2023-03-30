@@ -48,3 +48,16 @@ jobs:
     #  with:
     #    commit_message: auto-checkin
     #    branch: master
+    - name: Commit #上传日志到仓库，可以自行修改 name 和 email
+      env:
+       NAME: xiexie
+       EMAIL: 651962375@qq.com
+      run: |
+        git config --global user.name "$NAME"
+        git config --global user.email "$EMAIL"
+        git add .
+        git commit -m "update log" -a
+    - name: Push log
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.TOKEN }}
