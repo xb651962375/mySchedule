@@ -44,6 +44,7 @@ jobs:
        NAME: xiebin
        EMAIL: 651962375@qq.com
       run: |
+        git credential-manager uninstall
         git config --global user.name "$NAME"
         git config --global user.email "$EMAIL"
         git add .
