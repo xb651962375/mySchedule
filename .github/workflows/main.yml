@@ -1,8 +1,13 @@
-name: 'SockBoom Chickin'
+name: 'SockBoom Checkin Action'
 
 on: 
+  release:
+    types: [published]
+  push:
+    tags:
+    - 'v*'
   schedule:
-    - cron: '30 17 * * *' # UTC+8小时=北京时间 17代表凌晨一点
+    - cron: '0 16 * * *'
   watch:
     types: [started]
    
@@ -11,10 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOMAIN: https://sockboom.tv
-    # 为了避免被其他人点击 Star 导致的不必要的麻烦，还需要在 workflow 文件中加上 这样只有仓库所有者，也就是你自己点 Star 才有效
-    if: >-
-      github.event.repository.owner.id == github.event.sender.id ||
-      github.event_name == 'schedule'
+    if: github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule'
     steps:
     - name: Setup timezone
       uses: zcong1993/setup-timezone@master
@@ -22,42 +24,31 @@ jobs:
         timezone: Asia/Shanghai          
     - name: Get log
       uses: actions/checkout@master
-    - name: Login in APi #登录获取cookie
+    - name: login in APi #登录获取cookie
       env:
         EMAIL: ${{ secrets.EMAIL }}
         PASSWORD: ${{ secrets.PASSWORD }}
       run: | 
         curl -s -c cookie.txt -X POST "$DOMAIN/auth/login" -d email="$EMAIL" -d passwd="$PASSWORD"
-    - name: Chickin Api #签到
+    - name: Chick in Api #签到
+      env:
+        SENDKEY: ${{ secrets.SENDKEY }}
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
         response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
+        curl -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=${response}&desp=${response}" 
         echo "$dateTime - $(echo -e $response)" >> run.log
         tail run.log #避免日志上传失败丢失日志
-    - name: Push bark
+    - name: Commit #上传日志到仓库，可以自行修改 name 和 email
       env:
-        BARK_URL: ${{ secrets.BARK_URL }}
-        ICON: https://github.githubassets.com/favicons/favicon-dark.png
-        GROUP: gh-action
-      if: env.BARK_URL != null
+       NAME: xiebin
+       EMAIL: 651962375@qq.com
       run: |
-        PALYLOAD=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
-        curl "$BARK_URL/$PALYLOAD?group=$GROUP&icon=$ICON"
-    #- name: Push log #更新日志
-    #  uses: stefanzweifel/git-auto-commit-action@v4
-    #  with:
-    #    commit_message: auto-checkin
-    #    branch: master
-    #- name: Commit #上传日志到仓库，可以自行修改 name 和 email
-    #  env:
-    #   NAME: xiexie
-    #   EMAIL: 651962375@qq.com
-    #  run: |
-    #    git config --global user.name "$NAME"
-    #    git config --global user.email "$EMAIL"
-    #    git add .
-    #    git commit -m "update log" -a
-    #- name: Push log
-    #  uses: ad-m/github-push-action@master
-    #  with:
-    #    github_token: ${{ secrets.TOKEN }}
+        git config --global user.name "$NAME"
+        git config --global user.email "$EMAIL"
+        git add .
+        git commit -m "update log" -a
+    - name: Push log
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.TOKEN }}
