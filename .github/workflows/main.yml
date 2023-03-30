@@ -36,13 +36,12 @@ jobs:
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
         response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
-        urlEncodeResponse=`echo -n "$response" | xxd -ps | tr -d '\n' | sed -r 's/(..)/%\1/g'`;
-        curl -H "Content-type:application/x-www-form-urlencoded;charset=GBK" -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=${urlEncodeResponse}&desp=${urlEncodeResponse}" 
+        curl  -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=${response}&desp=${response}" 
         echo "$dateTime - $(echo -e $response)" >> run.log
         tail run.log #避免日志上传失败丢失日志
     - name: Commit #上传日志到仓库，可以自行修改 name 和 email
       env:
-       NAME: xiebin
+       NAME: xb651962375
        EMAIL: 651962375@qq.com
       run: |
         git config --global user.name "$NAME"
