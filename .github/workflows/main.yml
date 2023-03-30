@@ -32,7 +32,7 @@ jobs:
         curl -s -c cookie.txt -X POST "$DOMAIN/auth/login" -d email="$EMAIL" -d passwd="$PASSWORD"
     - name: Chick in Api #签到
       env:
-        SENDKEY: ${{ secrets.SCT-SENDKEY }}
+        SENDKEY: ${{ secrets.SCT_SENDKEY }}
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
         response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
