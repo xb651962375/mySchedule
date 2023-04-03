@@ -25,13 +25,13 @@ jobs:
         EMAIL: ${{ secrets.EMAIL }}
         PASSWORD: ${{ secrets.PASSWORD }}
       run: | 
-        curl -s -c cookie.txt -X POST "$DOMAIN/auth/login" -d email="$EMAIL" -d passwd="$PASSWORD"
+        curl -s -c cookie.txt -X POST "${DOMAIN}/auth/login" -d email="${EMAIL}" -d passwd="${PASSWORD}"
     - name: Chickin Api #签到
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
-        response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
+        response=$(curl -b cookie.txt -X POST "${DOMAIN}/user/checkin")
         rm -rf cookie.txt
-        echo "$dateTime - $(echo -e $response)" >> run.log
+        echo "$dateTime - $(echo -e ${response})" >> run.log
         tail run.log #避免日志上传失败丢失日志
     - name: Push bark
       env:
