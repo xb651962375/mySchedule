@@ -1,13 +1,8 @@
 name: 'SockBoom Checkin Action'
 
 on: 
-  release:
-    types: [published]
-  push:
-    tags:
-    - 'v*'
   schedule:
-    - cron: '0 16 * * *'
+    - cron: '30 17 * * *' # UTC+8小时=北京时间 17代表凌晨一点
   watch:
     types: [started]
    
@@ -16,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOMAIN: https://sockboom.tv
-    if: github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule'
+    if: >-
+      github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule'
     steps:
     - name: Setup timezone
       uses: zcong1993/setup-timezone@master
@@ -24,31 +20,26 @@ jobs:
         timezone: Asia/Shanghai          
     - name: Get log
       uses: actions/checkout@master
-    - name: login in APi #登录获取cookie
+    - name: Login in APi #登录获取cookie
       env:
         EMAIL: ${{ secrets.EMAIL }}
         PASSWORD: ${{ secrets.PASSWORD }}
       run: | 
         curl -s -c cookie.txt -X POST "$DOMAIN/auth/login" -d email="$EMAIL" -d passwd="$PASSWORD"
-    - name: Chick in Api #签到
-      env:
-        SENDKEY: ${{ secrets.SCT_SENDKEY }}
+    - name: Chickin Api #签到
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
         response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
-        curl  -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=${response}&desp=${response}" 
         echo "$dateTime - $(echo -e $response)" >> run.log
         tail run.log #避免日志上传失败丢失日志
-    # - name: Commit #上传日志到仓库，可以自行修改 name 和 email
-    #   env:
-    #    NAME: xb651962375
-    #    EMAIL: 651962375@qq.com
-    #   run: |
-    #     git config --global user.name "$NAME"
-    #     git config --global user.email "$EMAIL"
-    #     git add .
-    #     git commit -m "update log" -a
-    # - name: Push log
-    #   uses: ad-m/github-push-action@master
-    #   with:
-    #     github_token: ${{ secrets.TOKEN }}
+    - name: Push bark
+      env:
+        SENDKEY: ${{ secrets.SCT_SENDKEY }}
+      run: |
+        PALYLOAD=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
+        curl  -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=$PALYLOAD&desp=$PALYLOAD" 
+    - name: Push log #更新日志
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: auto-checkin
+        branch: main
