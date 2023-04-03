@@ -30,6 +30,7 @@ jobs:
       run: | 
         dateTime=`date +%Y-%m-%d\ %H:%M:%S`
         response=$(curl -b cookie.txt -X POST "$DOMAIN/user/checkin")
+        rm -rf cookie.txt
         echo "$dateTime - $(echo -e $response)" >> run.log
         tail run.log #避免日志上传失败丢失日志
     - name: Push bark
