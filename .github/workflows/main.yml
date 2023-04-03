@@ -34,10 +34,12 @@ jobs:
         tail run.log #避免日志上传失败丢失日志
     - name: Push bark
       env:
+        BARK_URL: ${{ secrets.SCT_BARK_URL }}
         SENDKEY: ${{ secrets.SCT_SENDKEY }}
+      if: env.BARK_URL != null
       run: |
-        PALYLOAD=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
-        curl  -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" -d "title=$PALYLOAD&desp=$PALYLOAD" 
+        palyload=$(tail -n 1 run.log | xxd -plain | tr -d '\n' | sed 's/\(..\)/%\1/g')
+        curl  -X POST "${BARK_URL}/${SENDKEY}.send" -d "title=${palyload}&desp=${palyload}" 
     - name: Push log #更新日志
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
